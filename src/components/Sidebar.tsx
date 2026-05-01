@@ -22,7 +22,8 @@ import {
   ShieldCheck,
   Handshake,
   Globe,
-  BrainCircuit
+  BrainCircuit,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,8 @@ const navItems = [
   { icon: ShieldCheck, label: 'Command Center', path: '/exec-suite' },
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
   { icon: BrainCircuit, label: 'Agent Intelligence', path: '/intelligence' },
+  { icon: Mail, label: 'Email Center', path: '/email' },
+  { icon: MessageSquare, label: 'WhatsApp Business', path: '/whatsapp' },
   { icon: Globe, label: 'Marketplace', path: '/marketplace' },
   { icon: Handshake, label: 'Collaboration Hub', path: '/collaboration' },
   { icon: Briefcase, label: 'Jobs', path: '/jobs' },

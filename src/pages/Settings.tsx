@@ -274,26 +274,30 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-slate-50">
-                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                  <div className="bg-amber-50 border border-amber-200 p-6 rounded-[2rem] flex items-start gap-4">
+                    <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" />
                     <div>
-                      <h5 className="text-[11px] font-black text-amber-900 uppercase">Action Required in Google Cloud Console</h5>
-                      <p className="text-[10px] text-amber-700 font-medium leading-relaxed mt-1">
-                        If you see an "Old App" or "Authorization Error", update your Authorized Redirect URIs in the Google Developer Console to match the URI below. This ensures the token returns to this specific HireNest instance.
+                      <h5 className="text-sm font-black text-amber-900 uppercase tracking-tight">Step 1: Update Google Cloud Console</h5>
+                      <p className="text-xs text-amber-700 font-medium leading-relaxed mt-2">
+                        To link your Gmail, you MUST add this exact URI to your "Authorized redirect URIs" in the Google Cloud Console. 
+                        If you see an old app, it's because you are using a client ID associated with a different domain.
                       </p>
+                      <div className="mt-4 flex items-center gap-3">
+                        <code className="px-4 py-2 bg-slate-900 text-indigo-400 rounded-xl text-[10px] font-mono break-all border border-slate-800 select-all">
+                          {window.location.origin}/settings
+                        </code>
+                        <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest border-b border-amber-300">Copy this exact URL</span>
+                      </div>
                     </div>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">OAuth Configuration</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase ml-1">Redirect URI (Copy to Google Console)</p>
-                      <code className="block p-3 bg-slate-900 text-slate-300 rounded-lg text-[10px] break-all border border-slate-800 font-mono select-all">
-                        {gmailConfig.redirectUri}
-                      </code>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase ml-1">Universal Webhook Handle</p>
-                      <code className="block p-3 bg-slate-50 rounded-lg text-[10px] break-all border border-slate-200 font-mono">{gmailConfig.webhookUrl}</code>
+                  
+                  <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2rem] flex items-start gap-4 mt-4">
+                    <Shield className="w-6 h-6 text-indigo-600 shrink-0" />
+                    <div>
+                      <h5 className="text-sm font-black text-indigo-900 uppercase tracking-tight">Step 2: Scopes & Verification</h5>
+                      <p className="text-xs text-indigo-700 font-medium leading-relaxed mt-2">
+                        Configure your app as "External" and add the `gmail.readonly` scope. This app is currently in a developer sandbox environment.
+                      </p>
                     </div>
                   </div>
                 </div>

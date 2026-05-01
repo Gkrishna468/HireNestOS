@@ -21,11 +21,13 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  DollarSign
+  DollarSign,
+  Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { safeArray, safeString, safeDate } from '@/utils/safe';
+import { broadcastJob } from '@/services/marketplaceService';
 
 export default function Jobs() {
   const { jobs, loading, approveJobWithBudget, addJob } = useData();
@@ -219,11 +221,30 @@ export default function Jobs() {
                     >
                       Approve
                     </button>
-                  ) : (
-                    <button className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-indigo-600 transition-all border border-transparent hover:border-slate-100 shadow-none hover:shadow-sm">
-                      <ChevronRight className="w-4 h-4" />
+                  ) : !job.broadcast_to_vendors ? (
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await broadcastJob(job.id);
+                          toast.success('Broadcasted to Marketplace');
+                        } catch (err) {
+                          toast.error('Failed to broadcast');
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-1.5"
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      Broadcast
                     </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      Live
+                    </div>
                   )}
+                  <button className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-indigo-600 transition-all border border-transparent hover:border-slate-100 shadow-none hover:shadow-sm">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>

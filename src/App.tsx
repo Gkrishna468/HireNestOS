@@ -23,6 +23,8 @@ import FollowUps from './pages/FollowUps';
 import DealRoom from './pages/DealRoom';
 import ExecSuite from './pages/ExecSuite';
 import IntelligenceCenter from './pages/IntelligenceCenter';
+import EmailCenter from './pages/EmailCenter';
+import WhatsAppCenter from './pages/WhatsAppCenter';
 import CollaborationHub from './pages/CollaborationHub';
 import Marketplace from './pages/Marketplace';
 import AgentChat from './pages/AgentChat';
@@ -66,6 +68,8 @@ export default function App() {
             <Route path="/deal-room" element={<PrivateRoute><DealRoom /></PrivateRoute>} />
             <Route path="/exec-suite" element={<PrivateRoute><ExecSuite /></PrivateRoute>} />
             <Route path="/intelligence" element={<PrivateRoute><IntelligenceCenter /></PrivateRoute>} />
+            <Route path="/email" element={<PrivateRoute><EmailCenter /></PrivateRoute>} />
+            <Route path="/whatsapp" element={<PrivateRoute><WhatsAppCenter /></PrivateRoute>} />
             <Route path="/marketplace" element={<PrivateRoute><Marketplace /></PrivateRoute>} />
             <Route path="/collaboration" element={<PrivateRoute><CollaborationHub /></PrivateRoute>} />
             <Route path="/agent-chat" element={<PrivateRoute><AgentChat /></PrivateRoute>} />
