@@ -68,13 +68,16 @@ export default function Settings() {
         throw new Error('Please configure Supabase first');
       }
       
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: 'openid email profile https://www.googleapis.com/auth/gmail.readonly',
-          redirectTo: window.location.origin + '/settings',
-        },
-      });
+    await supabase.auth.signInWithOAuth({
+  provider: "google",
+  options: {
+    scopes: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify",
+    queryParams: {
+      access_type: "offline",
+      prompt: "consent"
+    }
+  }
+});
 
       if (error) throw error;
       
