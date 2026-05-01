@@ -1,7 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 /**
  * Reply Agent: Detects responses and classifies intent using Gemini
