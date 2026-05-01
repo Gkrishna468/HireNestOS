@@ -1,10 +1,10 @@
 
-import { GoogleGenAI } from "@google/genai";
+
 import { supabase } from "@/lib/supabase";
 import { recordDeal } from "./financialService";
 import { calculateAdjustedBudget } from "./marketplaceService";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+
 
 /**
  * JOB POSTING: Initial trigger for marketplace
