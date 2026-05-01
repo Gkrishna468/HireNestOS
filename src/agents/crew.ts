@@ -10,6 +10,10 @@ import { supabase } from '@/lib/supabase';
 export async function runCrew() {
   const startTime = Date.now();
   
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log("CREW SESSION:", session);
+  console.log("CREW GMAIL TOKEN:", session?.provider_token);
+
   await supabase.from('agent_logs').insert({
     type: 'crew',
     message: 'Autonomous Crew mission initiated.',

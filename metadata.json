@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "HireNest Enterprise CRM",
+  "description": "Autonomous Recruitment Operating System with AI Agents, Marketplace broadcasts, and WhatsApp/Email automation.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["recruitment", "ai-agents", "workflow-automation", "marketplace"]
 }

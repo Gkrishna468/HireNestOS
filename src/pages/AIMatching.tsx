@@ -8,7 +8,6 @@ import { useData } from '@/contexts/DataContext';
 import { 
   Zap, 
   Search, 
-  SearchIcon, 
   CheckCircle2, 
   Clock, 
   TrendingUp,
@@ -17,7 +16,8 @@ import {
   ChevronRight,
   Filter,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -100,7 +100,7 @@ export default function AIMatching() {
             </h3>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Select Requisition</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Select Requisition</label>
                 <select 
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
                   onChange={(e) => setSelectedJob(jobs.find(j => j.id === e.target.value))}
@@ -238,7 +238,7 @@ export default function AIMatching() {
                 ))
               ) : (
                 <div className="p-20 text-center text-slate-400 flex flex-col items-center justify-center h-full">
-                  <SearchIcon className="w-12 h-12 mb-4 opacity-10" />
+                  <Search className="w-12 h-12 mb-4 opacity-10" />
                   <p className="font-medium">No matches found yet.</p>
                   <p className="text-sm mt-1">Select a job and run neural match to start discovering candidates.</p>
                 </div>
@@ -258,7 +258,3 @@ export default function AIMatching() {
     </div>
   );
 }
-
-const RefreshCw = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>
-);

@@ -46,7 +46,7 @@ const navItems = [
   { icon: Zap, label: 'AI Matching', path: '/ai-matching' },
   { icon: History, label: 'Follow-ups', path: '/follow-ups' },
   { icon: TrendingUp, label: 'Deal Room', path: '/deal-room' },
-  { icon: MessageSquare, label: 'Agent Chat', path: '/agent-chat' },
+  { icon: Bot, label: 'Agent Chat', path: '/agent-chat' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 

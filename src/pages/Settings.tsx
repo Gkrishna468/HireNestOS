@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-
+import { isSupabaseConfigured, reinitializeSupabase, supabase } from '@/lib/supabase';
 
 export default function Settings() {
   const { user } = useAuth();
@@ -44,57 +44,62 @@ export default function Settings() {
   });
 
   useEffect(() => {
-    setGmailConnected(localStorage.getItem('hirenest_gmail_connected') === 'true');
+    async function checkGmail() {
+      if (isSupabaseConfigured()) {
+        const { data: { session } } = await supabase.auth.getSession();
+        setGmailConnected(!!session?.provider_token);
+      }
+    }
+    checkGmail();
   }, []);
 
-const saveSupabase = async () => {
-  setLoading(true);
-  try {
-    localStorage.setItem('hirenest_supabase_url', supabaseConfig.url);
-    localStorage.setItem('hirenest_supabase_anon_key', supabaseConfig.anonKey);
-
-    // Reload app instead of reinitialize
-    window.location.reload();
-
-  } catch (err) {
-    toast.error('Failed to update configuration');
-  } finally {
-    setLoading(false);
-  }
-};
-
-const connectGmail = async () => {
-  setLoading(true);
-  try {
-    if (!isSupabaseConfigured()) {
-      throw new Error('Please configure Supabase first');
+  const saveSupabase = async () => {
+    setLoading(true);
+    try {
+      localStorage.setItem('hirenest_supabase_url', supabaseConfig.url);
+      localStorage.setItem('hirenest_supabase_anon_key', supabaseConfig.anonKey);
+      reinitializeSupabase();
+      toast.success('Supabase configuration updated and reinitialized');
+    } catch (err) {
+      toast.error('Failed to update configuration');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        scopes: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify",
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent"
-        }
+  const connectGmail = async () => {
+    setLoading(true);
+    try {
+      if (!isSupabaseConfigured()) {
+        throw new Error('Please configure Supabase first');
       }
-    });
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          },
+          redirectTo: window.location.origin,
+        },
+      });
 
-    if (error) throw error;
+      if (error) throw error;
+      
+      toast.success('Connecting to Google services...');
+    } catch (err: any) {
+      toast.error(err.message || 'Gmail connection failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    toast.success('Redirecting to Google...');
-    
-  } catch (err: any) {
-    toast.error(err.message || 'Gmail connection failed');
-  } finally {
-    setLoading(false);
-  }
-};
-  const disconnectGmail = () => {
-    localStorage.removeItem('hirenest_gmail_connected');
+  const disconnectGmail = async () => {
+    await supabase.auth.signOut();
     setGmailConnected(false);
-    toast.info('Gmail integration disconnected');
+    toast.info('Gmail integration disconnected (Signed out)');
   };
 
   return (

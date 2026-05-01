@@ -5,6 +5,10 @@ import { scoreCandidateForJob } from '@/services/intelligenceService';
  * Outreach Agent: Automatically contacts shortlisted candidates
  */
 export async function runOutreachAgent() {
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log("OUTREACH AGENT SESSION:", session);
+  console.log("OUTREACH AGENT GMAIL TOKEN:", session?.provider_token);
+
   // 1. Get shortlisted candidates who haven't been contacted yet
   // We check outreach_logs to avoid duplicate emails
   const { data: candidates } = await supabase
@@ -40,6 +44,10 @@ Founding Director, HireNest
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.provider_token;
 
+      if (!token) {
+        console.error("NO TOKEN → Gmail not connected properly in Outreach Agent");
+      }
+      
       if (token) {
         // Real Gmail Send Logic (conceptual for now, requires edge function or direct API)
         console.log(`[OUTREACH] Sending real email to ${candidate.email} via Gmail API`);
