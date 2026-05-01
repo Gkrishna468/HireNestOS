@@ -1,46 +1,38 @@
 import { supabase } from '@/lib/supabase';
+import { callGemini } from '@/services/aiService'; // ✅ IMPORTANT
 
 
-/**
- * Reply Agent: Detects responses and classifies intent using Gemini
- */
 export async function runReplyAgent() {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.provider_token;
 
-  if (!token) return "Gmail not connected. Skipping reply detection.";
+  if (!token) return "Gmail not connected.";
 
-  // In a real app, we poll https://gmail.googleapis.com/gmail/v1/users/me/messages?q=is:unread
-  // For this OS, we simulate the "intelligence" of detection by fetching sent logs
-  
   const { data: sentLogs } = await supabase
     .from('outreach_logs')
     .select('*')
     .eq('status', 'sent');
 
-  if (!sentLogs) return "No pending replies to check.";
+  if (!sentLogs?.length) return "No logs.";
 
   let detections = 0;
 
   for (const log of sentLogs) {
-    // Simulation: Only process 10% of logs to find a "reply"
     if (Math.random() > 0.9) {
-      const simulatedBody = "Hi, I received your email. The role sounds interesting! I am available on Thursday for a call.";
-      
+      const simulatedBody = "Hi, I am interested in this role.";
+
       try {
         const prompt = `
-          Classify the following candidate reply as: INTERESTED, REJECTED, or NEUTRAL.
-          REPLY: "${simulatedBody}"
-          
-          Return ONLY the classification string.
-        `;
+Classify this reply:
 
-        const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
-          contents: prompt
-        });
+"${simulatedBody}"
 
-        const intent = response.text?.trim() || "NEUTRAL";
+Return ONLY:
+INTERESTED / REJECTED / NEUTRAL
+`;
+
+        const result = await callGemini(prompt);
+        const intent = result.trim();
 
         if (intent === 'INTERESTED') {
           await supabase.from('outreach_logs').update({
@@ -48,25 +40,25 @@ export async function runReplyAgent() {
             replied_at: new Date().toISOString()
           }).eq('id', log.id);
 
-          // Auto-move candidate to next stage based on AI detection
           await supabase.from('candidates').update({
             stage: 'interview',
-            notes: `[AI AUTONOMOUS] Reply detected: "${intent}". Moving to active interview path.`
+            notes: `[AI] Interested reply detected`
           }).eq('id', log.candidate_id);
 
           await supabase.from('agent_logs').insert({
             type: 'reply',
-            message: `AI detected INTERESTED intent from ${log.email}. Auto-updated candidate stage.`,
+            message: `Reply detected from ${log.email}`,
             level: 'success'
           });
-          
+
           detections++;
         }
+
       } catch (err) {
-        console.error('AI Intent Error:', err);
+        console.error('Reply AI Error:', err);
       }
     }
   }
 
-  return `Reply detection cycle complete. Found ${detections} responses.`;
+  return `Detected ${detections} replies`;
 }
