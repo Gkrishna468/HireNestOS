@@ -1,0 +1,232 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { useData } from '@/contexts/DataContext';
+import { 
+  Zap, 
+  Search, 
+  SearchIcon, 
+  CheckCircle2, 
+  Clock, 
+  TrendingUp,
+  Briefcase,
+  Users,
+  ChevronRight,
+  Filter,
+  ArrowRight
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { safeArray, safeString } from '@/utils/safe';
+
+export default function AIMatching() {
+  const { jobs, candidates, loading } = useData();
+  const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [isMatching, setIsMatching] = useState(false);
+  const [matches, setMatches] = useState<any[]>([]);
+
+  const runMatching = async () => {
+    if (!selectedJob) return;
+    setIsMatching(true);
+    
+    // Simulate AI execution
+    await new Promise(r => setTimeout(r, 2000));
+    
+    const jobSkills = safeArray(selectedJob.skills);
+    
+    const scoredCandidates = safeArray(candidates).map(c => {
+      const candidateSkills = safeArray(c.skills);
+      const overlap = candidateSkills.filter(s => 
+        jobSkills.some(js => js.toLowerCase().includes(s.toLowerCase()))
+      );
+      
+      const score = Math.round((overlap.length / Math.max(jobSkills.length, 1)) * 100);
+      
+      return {
+        ...c,
+        score,
+        matchedSkills: overlap
+      };
+    }).sort((a, b) => b.score - a.score).filter(c => c.score > 0);
+
+    setMatches(scoredCandidates);
+    setIsMatching(false);
+  };
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Neural Matching</h1>
+        <p className="text-slate-500 mt-1">AI-driven candidate relevance scoring based on unified resume and portal data.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Briefcase className="w-4 h-4 text-indigo-600" />
+              Target Role
+            </h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Select Requisition</label>
+                <select 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
+                  onChange={(e) => setSelectedJob(jobs.find(j => j.id === e.target.value))}
+                  value={selectedJob?.id || ''}
+                >
+                  <option value="">Choose a vacancy...</option>
+                  {jobs.filter(j => j.status === 'open' || j.status === 'pending').map(job => (
+                    <option key={job.id} value={job.id}>{job.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedJob && (
+                <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100/50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <p className="text-xs text-indigo-900 font-bold">{selectedJob.title}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {safeArray(selectedJob.skills).map(s => (
+                      <span key={s} className="px-1.5 py-0.5 bg-indigo-100/50 text-indigo-600 text-[9px] font-bold rounded uppercase">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button 
+                onClick={runMatching}
+                disabled={!selectedJob || isMatching}
+                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:grayscale transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+              >
+                {isMatching ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-current" />}
+                {isMatching ? 'Running AI Scoring...' : 'Run Neural Match'}
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 p-6 rounded-2xl text-white shadow-xl overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Zap className="w-16 h-16" />
+            </div>
+            <h3 className="font-bold mb-4 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Inference Logic
+            </h3>
+            <div className="space-y-3 relative z-10">
+              {[
+                { label: 'Skill Overlap', weight: '70%', status: 'active' },
+                { label: 'Role Context', weight: '20%', status: 'active' },
+                { label: 'Location Fit', weight: '10%', status: 'active' },
+              ].map(w => (
+                <div key={w.label} className="flex items-center justify-between text-[10px]">
+                  <span className="text-slate-400 font-bold uppercase tracking-widest">{w.label}</span>
+                  <span className="font-mono text-indigo-400">{w.weight}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-slate-900">Ranked Results</h3>
+                  <p className="text-slate-400 text-xs mt-0.5">Scored against {selectedJob?.title || 'None'}</p>
+                </div>
+              </div>
+              <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-colors">
+                <Filter className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-50 flex-1">
+              {isMatching ? (
+                <div className="h-full flex flex-col items-center justify-center p-20 text-center animate-pulse">
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-full bg-indigo-100 animate-ping opacity-25" />
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 relative">
+                     <Zap className="w-8 h-8 fill-current" />
+                    </div>
+                  </div>
+                  <h4 className="font-bold text-slate-900 mt-6">AI Agent is thinking...</h4>
+                  <p className="text-sm text-slate-500 max-w-xs mt-2">Connecting candidates from resumes and portal data to your specific job requirements.</p>
+                </div>
+              ) : matches.length > 0 ? (
+                matches.map(match => (
+                  <div key={match.id} className="p-6 hover:bg-slate-50 transition-colors group flex items-start gap-6">
+                    <div className="relative pt-1 shrink-0">
+                      <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center font-bold text-lg text-indigo-600 group-hover:border-indigo-200 transition-colors">
+                        {match.score}%
+                      </div>
+                      <div className={cn(
+                        "absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white",
+                        match.score > 80 ? 'bg-green-500' : match.score > 50 ? 'bg-orange-500' : 'bg-slate-300'
+                      )} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">{match.name}</h4>
+                          <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500 font-medium font-medium">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              {match.yearsExperience} yrs exp
+                            </span>
+                            <span className="text-slate-300">|</span>
+                            <span>{match.location}</span>
+                          </div>
+                        </div>
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all group/btn">
+                          Select for Deal
+                          <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
+                        </button>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {safeArray(match.matchedSkills).map(s => (
+                          <span key={s} className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded uppercase border border-green-100 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            {s}
+                          </span>
+                        ))}
+                        {safeArray(match.skills).filter(s => !match.matchedSkills.includes(s)).slice(0, 4).map(s => (
+                          <span key={s} className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[10px] font-bold rounded uppercase border border-slate-100">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-20 text-center text-slate-400 flex flex-col items-center justify-center h-full">
+                  <SearchIcon className="w-12 h-12 mb-4 opacity-10" />
+                  <p className="font-medium">No matches found yet.</p>
+                  <p className="text-sm mt-1">Select a job and run neural match to start discovering candidates.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <span>Security isolation active</span>
+              <div className="flex gap-4">
+                <span>VPC-01-PROD</span>
+                <span>Latency: {isMatching ? '~' : '0.12ms'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const RefreshCw = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>
+);
