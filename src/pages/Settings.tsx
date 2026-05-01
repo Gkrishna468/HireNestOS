@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { isSupabaseConfigured, reinitializeSupabase, supabase } from '@/lib/supabase';
+
 
 export default function Settings() {
   const { user } = useAuth();
@@ -47,19 +47,21 @@ export default function Settings() {
     setGmailConnected(localStorage.getItem('hirenest_gmail_connected') === 'true');
   }, []);
 
-  const saveSupabase = async () => {
-    setLoading(true);
-    try {
-      localStorage.setItem('hirenest_supabase_url', supabaseConfig.url);
-      localStorage.setItem('hirenest_supabase_anon_key', supabaseConfig.anonKey);
-      reinitializeSupabase();
-      toast.success('Supabase configuration updated and reinitialized');
-    } catch (err) {
-      toast.error('Failed to update configuration');
-    } finally {
-      setLoading(false);
-    }
-  };
+const saveSupabase = async () => {
+  setLoading(true);
+  try {
+    localStorage.setItem('hirenest_supabase_url', supabaseConfig.url);
+    localStorage.setItem('hirenest_supabase_anon_key', supabaseConfig.anonKey);
+
+    // Reload app instead of reinitialize
+    window.location.reload();
+
+  } catch (err) {
+    toast.error('Failed to update configuration');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const connectGmail = async () => {
     setLoading(true);
