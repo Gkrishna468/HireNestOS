@@ -63,38 +63,34 @@ const saveSupabase = async () => {
   }
 };
 
-  const connectGmail = async () => {
-    setLoading(true);
-    try {
-      if (!isSupabaseConfigured()) {
-        throw new Error('Please configure Supabase first');
+const connectGmail = async () => {
+  setLoading(true);
+  try {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Please configure Supabase first');
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        scopes: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify",
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent"
+        }
       }
-      
-    await supabase.auth.signInWithOAuth({
-  provider: "google",
-  options: {
-    scopes: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify",
-    queryParams: {
-      access_type: "offline",
-      prompt: "consent"
-    }
+    });
+
+    if (error) throw error;
+
+    toast.success('Redirecting to Google...');
+    
+  } catch (err: any) {
+    toast.error(err.message || 'Gmail connection failed');
+  } finally {
+    setLoading(false);
   }
-});
-
-      if (error) throw error;
-      
-      // In a real app, the redirect handles the storage
-      // For this demo, we simulate the success flag
-      localStorage.setItem('hirenest_gmail_connected', 'true');
-      setGmailConnected(true);
-      toast.success('Connecting to Google services...');
-    } catch (err: any) {
-      toast.error(err.message || 'Gmail connection failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+};
   const disconnectGmail = () => {
     localStorage.removeItem('hirenest_gmail_connected');
     setGmailConnected(false);
