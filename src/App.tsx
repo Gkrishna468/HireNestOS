@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { Sidebar } from './components/Sidebar';
@@ -21,6 +21,10 @@ import Agents from './pages/Agents';
 import AIMatching from './pages/AIMatching';
 import FollowUps from './pages/FollowUps';
 import DealRoom from './pages/DealRoom';
+import ExecSuite from './pages/ExecSuite';
+import IntelligenceCenter from './pages/IntelligenceCenter';
+import CollaborationHub from './pages/CollaborationHub';
+import Marketplace from './pages/Marketplace';
 import AgentChat from './pages/AgentChat';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -47,7 +51,7 @@ export default function App() {
   return (
     <AuthProvider>
       <DataProvider>
-        <BrowserRouter>
+        <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -60,12 +64,16 @@ export default function App() {
             <Route path="/ai-matching" element={<PrivateRoute><AIMatching /></PrivateRoute>} />
             <Route path="/follow-ups" element={<PrivateRoute><FollowUps /></PrivateRoute>} />
             <Route path="/deal-room" element={<PrivateRoute><DealRoom /></PrivateRoute>} />
+            <Route path="/exec-suite" element={<PrivateRoute><ExecSuite /></PrivateRoute>} />
+            <Route path="/intelligence" element={<PrivateRoute><IntelligenceCenter /></PrivateRoute>} />
+            <Route path="/marketplace" element={<PrivateRoute><Marketplace /></PrivateRoute>} />
+            <Route path="/collaboration" element={<PrivateRoute><CollaborationHub /></PrivateRoute>} />
             <Route path="/agent-chat" element={<PrivateRoute><AgentChat /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
           <Toaster position="top-right" richColors />
-        </BrowserRouter>
+        </Router>
       </DataProvider>
     </AuthProvider>
   );

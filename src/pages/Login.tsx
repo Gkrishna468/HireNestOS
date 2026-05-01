@@ -63,7 +63,7 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@hirenest.com"
+                  placeholder="name@company.com"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                 />
               </div>
@@ -113,11 +113,8 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-slate-100">
-            <div className="flex flex-col gap-2 text-center text-xs text-slate-500">
-              <p>Demo Account: admin@hirenest.com / admin123</p>
-              <p>Organization: HireNest Workforce CRM</p>
-            </div>
+          <div className="mt-8 pt-8 border-t border-slate-100 text-center">
+            <p className="text-xs text-slate-400">HireNest Workforce CRM Enterprise OS</p>
           </div>
         </div>
       </div>

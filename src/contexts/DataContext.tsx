@@ -9,7 +9,7 @@ import { getClients, createClient, updateClient } from '@/lib/api/clients';
 import { getVendors, createVendor, updateVendor } from '@/lib/api/vendors';
 import { getJobs, createJob, approveJob } from '@/lib/api/jobs';
 import { getAllCandidates, createCandidate, updateCandidate, deleteCandidate } from '@/lib/api/candidates';
-import type { Client, Vendor, Job, Candidate, AgentLog } from '@/types';
+import type { Client, Vendor, Job, Candidate, AgentLog, Deal } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 interface DataContextType {
@@ -18,13 +18,15 @@ interface DataContextType {
   jobs: Job[];
   candidates: Candidate[];
   logs: AgentLog[];
+  deals: any[];
+  userProfile: any | null;
   loading: boolean;
   refreshAll: () => Promise<void>;
   addClient: (data: Partial<Client>) => Promise<void>;
   addVendor: (data: Partial<Vendor>) => Promise<void>;
   addJob: (data: Partial<Job>) => Promise<void>;
   addCandidate: (data: Partial<Candidate>) => Promise<void>;
-  updateCandidateStatus: (id: string, status: Candidate['status'], stage: Candidate['stage']) => Promise<void>;
+  updateCandidateStatus: (id: string, stage: Candidate['stage'], status?: string) => Promise<void>;
   approveJobWithBudget: (id: string, budget: string) => Promise<void>;
 }
 
@@ -37,22 +39,35 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [logs, setLogs] = useState<AgentLog[]>([]);
+  const [deals, setDeals] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshAll = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [cData, vData, jData, candData] = await Promise.all([
+      // Fetch User Profile first for context
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      setUserProfile(profile);
+
+      const [cData, vData, jData, candData, dealData] = await Promise.all([
         getClients(),
         getVendors(),
         getJobs(),
         getAllCandidates(),
+        supabase.from('deals').select('*').order('created_at', { ascending: false })
       ]);
       setClients(cData);
       setVendors(vData);
       setJobs(jData);
       setCandidates(candData);
+      setDeals(dealData.data || []);
 
       // Fetch logs
       const { data: logsData, error: logsError } = await supabase
@@ -71,11 +86,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           type: l.type,
           level: l.level === 'success' ? 'success' : (l.level || 'info'),
           message: l.message,
-          status: l.status,
           metadata: l.metadata,
           companyId: l.company_id,
           createdAt: l.created_at
-        })));
+        } as AgentLog)));
       }
     } catch (err) {
       console.error('Failed to load data:', err);
@@ -98,7 +112,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'agent_logs' },
         (payload) => {
-          setLogs(prev => [payload.new as AgentLog, ...prev].slice(0, 50));
+          setLogs(prev => [payload.new as any, ...prev].slice(0, 50));
         }
       )
       .subscribe();
@@ -128,8 +142,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     await refreshAll();
   };
 
-  const updateCandidateStatus = async (id: string, status: Candidate['status'], stage: Candidate['stage']) => {
-    await updateCandidate(id, { status, stage });
+  const updateCandidateStatus = async (id: string, stage: Candidate['stage'], status?: string) => {
+    await updateCandidate(id, { stage, status });
     await refreshAll();
   };
 
@@ -140,7 +154,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      clients, vendors, jobs, candidates, logs, loading,
+      clients, vendors, jobs, candidates, logs, deals, userProfile, loading,
       refreshAll, addClient, addVendor, addJob, addCandidate,
       updateCandidateStatus, approveJobWithBudget
     }}>

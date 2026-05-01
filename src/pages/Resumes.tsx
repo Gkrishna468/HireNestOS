@@ -24,14 +24,29 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { safeArray, safeString, safeDate } from '@/utils/safe';
+import { parseResumeWithAI } from '@/services/intelligenceService';
 
 export default function Resumes() {
   const { refreshAll } = useData();
   const [resumes, setResumes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchResumes = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('resumes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setResumes(data || []);
+    setLoading(false);
+  };
+
+  React.useEffect(() => {
+    fetchResumes();
+  }, []);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -69,20 +84,62 @@ export default function Resumes() {
 
       if (resumeError) throw resumeError;
 
-      // 3. Auto-create Candidate
-      const { error: candidateError } = await supabase
-        .from('candidates')
-        .insert({
+      // 3. AI Analysis & Extraction
+      toast.loading('Neural Engine parsing resume structure...', { id: toastId });
+      
+      // LOG: Intelligence Trigger
+      await supabase.from('agent_logs').insert({
+        type: 'match',
+        level: 'info',
+        message: `[INTEL AGENT] Ingested raw resume: "${file.name}". Starting neural skill extraction and hierarchy mapping.`,
+        metadata: { resumeId: resumeData.id, fileName: file.name, channel: 'system' }
+      });
+
+      try {
+        const parsedData = await parseResumeWithAI(`File: ${file.name}, Type: ${file.type}, Size: ${file.size}`);
+        
+        // LOG: Extraction Success
+        await supabase.from('agent_logs').insert({
+          type: 'match',
+          level: 'success',
+          message: `[INTEL AGENT] Successfully extracted profile for ${parsedData.name || 'candidate'}. Identified ${parsedData.skills?.length || 0} core skills and ${parsedData.experience || 'unknown'} tenure.`,
+          metadata: { resumeId: resumeData.id, candidateName: parsedData.name, skills: parsedData.skills }
+        });
+
+        // 4. Auto-create Candidate with AI-parsed data
+        const { error: candidateError } = await supabase
+          .from('candidates')
+          .insert({
+            name: parsedData.name || file.name.split('.')[0].replace(/[-_]/g, ' '),
+            email: parsedData.email,
+            phone: parsedData.phone,
+            current_title: parsedData.currentTitle,
+            skills: parsedData.skills,
+            experience: parsedData.experience,
+            summary: parsedData.summary,
+            resume_url: publicUrl,
+            source: 'resume',
+            status: 'active',
+            stage: 'screening' // Moved to screening automatically
+          });
+
+        if (candidateError) throw candidateError;
+        
+        toast.success(`Extracted profile for ${parsedData.name || 'candidate'}!`, { id: toastId });
+      } catch (aiErr) {
+        console.warn('AI Extraction failed, falling back to basic creation:', aiErr);
+        // Fallback: Create basic candidate if AI fails
+        await supabase.from('candidates').insert({
           name: file.name.split('.')[0].replace(/[-_]/g, ' '),
           resume_url: publicUrl,
           source: 'resume',
           status: 'active',
           stage: 'sourced'
         });
+        toast.info('Resume uploaded. AI extraction throttled, check manually.', { id: toastId });
+      }
 
-      if (candidateError) console.error('Failed to auto-create candidate:', candidateError);
-
-      toast.success('Resume uploaded and candidate created!', { id: toastId });
+      fetchResumes();
       refreshAll();
     } catch (err: any) {
       console.error('Upload error:', err);

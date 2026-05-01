@@ -115,6 +115,8 @@ export default function Clients() {
                           )}
                           <span className="text-slate-300">|</span>
                           <span className="font-mono text-xs font-bold uppercase tracking-wider">{client.clientCode || 'NO CODE'}</span>
+                          <span className="text-slate-300">|</span>
+                          <span className="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider">ORG: {client.companyId || 'ROOT_TENANT'}</span>
                         </div>
                       </div>
                     </div>

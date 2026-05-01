@@ -34,6 +34,40 @@ export default function Jobs() {
   const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [approvedBudget, setApprovedBudget] = useState('');
+  const [newJob, setNewJob] = useState({
+    title: '',
+    clientName: '',
+    clientId: '',
+    location: '',
+    type: 'Full-time',
+    openings: 1,
+    description: '',
+    skills: ''
+  });
+
+  const handleCreateJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await addJob({
+        ...newJob,
+        skills: newJob.skills.split(',').map(s => s.trim()).filter(Boolean)
+      });
+      toast.success('Job created successfully');
+      setIsModalOpen(false);
+      setNewJob({
+        title: '',
+        clientName: '',
+        clientId: '',
+        location: '',
+        type: 'Full-time',
+        openings: 1,
+        description: '',
+        skills: ''
+      });
+    } catch (err) {
+      toast.error('Failed to create job');
+    }
+  };
 
   const filteredJobs = safeArray(jobs).filter(job => 
     safeString(job.title).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -208,6 +242,118 @@ export default function Jobs() {
           >
             Create Job
           </button>
+        </div>
+      )}
+
+      {/* Create Job Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Post New Job Requisition</h2>
+                <p className="text-slate-400 text-xs mt-1">Fill in the details to start sourcing candidates.</p>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateJob} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Job Title</label>
+                <input
+                  type="text"
+                  required
+                  value={newJob.title}
+                  onChange={(e) => setNewJob({...newJob, title: e.target.value})}
+                  placeholder="e.g. Senior Frontend Engineer"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Client / Company</label>
+                <input
+                  type="text"
+                  required
+                  value={newJob.clientName}
+                  onChange={(e) => setNewJob({...newJob, clientName: e.target.value})}
+                  placeholder="e.g. TechCorp Solutions"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Location</label>
+                <input
+                  type="text"
+                  required
+                  value={newJob.location}
+                  onChange={(e) => setNewJob({...newJob, location: e.target.value})}
+                  placeholder="e.g. Remote, Mumbai, Bangalore"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Job Type</label>
+                <select
+                  value={newJob.type}
+                  onChange={(e) => setNewJob({...newJob, type: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                >
+                  <option>Full-time</option>
+                  <option>Contract</option>
+                  <option>Freelance</option>
+                  <option>Internship</option>
+                </select>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Skills (comma separated)</label>
+                <input
+                  type="text"
+                  required
+                  value={newJob.skills}
+                  onChange={(e) => setNewJob({...newJob, skills: e.target.value})}
+                  placeholder="React, TypeScript, Node.js, AWS"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Job Description</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={newJob.description}
+                  onChange={(e) => setNewJob({...newJob, description: e.target.value})}
+                  placeholder="Paste details about the role, responsibilities, and requirements..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div className="md:col-span-2 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
+                >
+                  Post Job
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

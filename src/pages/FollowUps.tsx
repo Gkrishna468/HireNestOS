@@ -27,12 +27,33 @@ export default function FollowUps() {
   const { clients, vendors, candidates, loading } = useData();
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Sample follow-ups (in real app these come from followups table)
-  const [followups, setFollowups] = useState([
-    { id: '1', type: 'client', entity: 'Infosys', message: 'Follow up on Budget approval for Senior React Dev', dueDate: new Date(Date.now() + 86400000).toISOString(), status: 'pending' },
-    { id: '2', type: 'vendor', entity: 'ABC Staffing', message: 'Request profiles for the Java Architect role', dueDate: new Date(Date.now() + 172800000).toISOString(), status: 'pending' },
-    { id: '3', type: 'candidate', entity: 'Raj Kumar', message: 'Send offer letter and confirm onboarding date', dueDate: new Date(Date.now() - 3600000).toISOString(), status: 'overdue' },
-  ]);
+  // Derive follow-ups from actual data
+  const followups = [
+    ...candidates.filter(c => c.stage === 'screening').map(c => ({
+      id: `cand-${c.id}`,
+      type: 'candidate',
+      entity: c.name,
+      message: `Initial screening pending for ${c.jobTitle || 'Active Role'}. Check resume and schedule intro call.`,
+      dueDate: new Date(new Date(safeDate(c.createdAt)).getTime() + 172800000).toISOString(),
+      status: (new Date(safeDate(c.createdAt)).getTime() + 172800000) < Date.now() ? 'overdue' : 'pending'
+    })),
+    ...candidates.filter(c => c.stage === 'offer').map(c => ({
+      id: `offer-${c.id}`,
+      type: 'candidate',
+      entity: c.name,
+      message: `Offer sent. Pending confirmation and background check verification.`,
+      dueDate: new Date(new Date(safeDate(c.updatedAt || c.createdAt)).getTime() + 86400000).toISOString(),
+      status: (new Date(safeDate(c.updatedAt || c.createdAt)).getTime() + 86400000) < Date.now() ? 'overdue' : 'pending'
+    })),
+    ...clients.slice(0, 2).map(cl => ({
+      id: `client-${cl.id}`,
+      type: 'client',
+      entity: cl.company,
+      message: `Monthly account review and new budget discussion for upcoming quarters.`,
+      dueDate: new Date(Date.now() + 259200000).toISOString(),
+      status: 'pending'
+    }))
+  ].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
   const getEntityIcon = (type: string) => {
     switch (type) {

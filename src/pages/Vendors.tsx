@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { safeArray, safeString } from '@/utils/safe';
+import { cn } from '@/lib/utils';
 
 export default function Vendors() {
   const { vendors, loading, addVendor } = useData();
@@ -45,7 +46,7 @@ export default function Vendors() {
       if (typeof addVendor === 'function') {
         const payload = {
           ...formData,
-          type: formData.isRecruiter ? 'recruiter' : 'vendor'
+          type: (formData.isRecruiter ? 'recruiter' : 'vendor') as any
         };
         await addVendor(payload);
         toast.success('Vendor registered');
@@ -118,6 +119,10 @@ export default function Vendors() {
               <div>
                 <h4 className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">{vendor.name}</h4>
                 <p className="text-sm text-slate-500 font-medium">{vendor.company}</p>
+                <div className="mt-2 flex items-center gap-1.5 opacity-60">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">ORG: {vendor.companyId || 'ROOT_TENANT'}</span>
+                </div>
                 <div className="flex flex-wrap gap-1 mt-4">
                   {safeArray(vendor.specialization).slice(0, 3).map(s => (
                     <span key={s} className="px-1.5 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold rounded uppercase border border-slate-100">{s}</span>

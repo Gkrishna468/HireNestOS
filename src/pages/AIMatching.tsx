@@ -16,43 +16,72 @@ import {
   Users,
   ChevronRight,
   Filter,
-  ArrowRight
+  ArrowRight,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { scoreCandidateForJob } from '@/services/intelligenceService';
 import { safeArray, safeString } from '@/utils/safe';
+import { toast } from 'sonner';
 
 export default function AIMatching() {
-  const { jobs, candidates, loading } = useData();
+  const { jobs, candidates } = useData();
   const [selectedJob, setSelectedJob] = useState<any>(null);
-  const [isMatching, setIsMatching] = useState(false);
   const [matches, setMatches] = useState<any[]>([]);
+  const [isMatching, setIsMatching] = useState(false);
 
   const runMatching = async () => {
     if (!selectedJob) return;
     setIsMatching(true);
     
-    // Simulate AI execution
-    await new Promise(r => setTimeout(r, 2000));
-    
-    const jobSkills = safeArray(selectedJob.skills);
-    
-    const scoredCandidates = safeArray(candidates).map(c => {
-      const candidateSkills = safeArray(c.skills);
-      const overlap = candidateSkills.filter(s => 
-        jobSkills.some(js => js.toLowerCase().includes(s.toLowerCase()))
-      );
-      
-      const score = Math.round((overlap.length / Math.max(jobSkills.length, 1)) * 100);
-      
-      return {
-        ...c,
-        score,
-        matchedSkills: overlap
-      };
-    }).sort((a, b) => b.score - a.score).filter(c => c.score > 0);
+    // Create an agent log for this "Autonomous" activity
+    await supabase.from('agent_logs').insert({
+      type: 'matching',
+      message: `Neural Engine scanning candidates for: ${selectedJob.title}`,
+      level: 'info',
+      status: 'running'
+    });
 
-    setMatches(scoredCandidates);
-    setIsMatching(false);
+    const results: any[] = [];
+    const toastId = toast.loading(`AI Engine evaluating ${candidates.length} profiles...`);
+
+    try {
+      // Parallel evaluation
+      const res = await Promise.all(candidates.map(async (c) => {
+        try {
+          const evaluation = await scoreCandidateForJob(selectedJob, c);
+          return {
+            ...c,
+            score: evaluation.score,
+            reasoning: evaluation.reasoning,
+            gaps: evaluation.gaps,
+            recommendation: evaluation.recommendation
+          };
+        } catch (e) {
+          return { ...c, score: 0, recommendation: 'reject' };
+        }
+      }));
+
+      const finalMatches = res
+        .sort((a, b) => b.score - a.score)
+        .filter(c => c.score > 10);
+
+      // Final log entry
+      await supabase.from('agent_logs').insert({
+        type: 'matching',
+        message: `Found ${finalMatches.length} potential matches for ${selectedJob.title}. Top score: ${finalMatches[0]?.score || 0}%`,
+        level: 'success',
+        status: 'finished'
+      });
+
+      setMatches(finalMatches);
+      toast.success(`Neural scan complete. Found ${finalMatches.length} matches.`, { id: toastId });
+    } catch (err: any) {
+      toast.error(`Matching Engine failed: ${err.message}`, { id: toastId });
+    } finally {
+      setIsMatching(false);
+    }
   };
 
   return (
@@ -175,7 +204,7 @@ export default function AIMatching() {
                       <div className="flex items-center justify-between gap-4">
                         <div>
                           <h4 className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">{match.name}</h4>
-                          <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500 font-medium font-medium">
+                          <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500 font-medium">
                             <span className="flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
                               {match.yearsExperience} yrs exp
@@ -190,15 +219,18 @@ export default function AIMatching() {
                         </button>
                       </div>
 
+                      {match.reasoning && (
+                        <p className="mt-3 text-sm text-slate-600 leading-relaxed italic bg-slate-50 p-3 rounded-xl border border-slate-100">
+                          " {match.reasoning} "
+                        </p>
+                      )}
+
                       <div className="mt-4 flex flex-wrap gap-1.5">
-                        {safeArray(match.matchedSkills).map(s => (
-                          <span key={s} className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded uppercase border border-green-100 flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" />
-                            {s}
+                        {safeArray(match.gaps).map(gap => (
+                          <span key={gap} className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded uppercase border border-red-100 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {gap}
                           </span>
-                        ))}
-                        {safeArray(match.skills).filter(s => !match.matchedSkills.includes(s)).slice(0, 4).map(s => (
-                          <span key={s} className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[10px] font-bold rounded uppercase border border-slate-100">{s}</span>
                         ))}
                       </div>
                     </div>

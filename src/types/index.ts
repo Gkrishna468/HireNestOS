@@ -3,14 +3,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type Role = 'admin' | 'manager' | 'recruiter' | 'vendor' | 'client' | 'viewer';
+export type Role = 'admin' | 'client_manager' | 'vendor_manager' | 'recruiter' | 'manager' | 'vendor' | 'client' | 'viewer';
+
+export interface Company {
+  id: string;
+  name: string;
+  type: 'client' | 'vendor' | 'internal';
+  createdAt: string;
+}
+
+export interface Agreement {
+  id: string;
+  companyId: string;
+  type: 'MSA' | 'NDA';
+  fileUrl: string;
+  status: 'pending' | 'signed' | 'expired';
+  signedAt?: string;
+  createdAt: string;
+}
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: Role;
-  company?: string;
+  companyId?: string;
   avatar?: string;
   phone?: string;
   status: 'active' | 'inactive';
@@ -30,6 +47,7 @@ export interface Client {
   clientCode?: string;
   notes?: string;
   userId?: string;
+  companyId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,24 +65,28 @@ export interface Vendor {
   recruiterCompany?: string;
   vendorCode?: string;
   userId?: string;
+  companyId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Job {
   id: string;
+  companyId: string;
   title: string;
   description: string;
   location: string;
   type: string;
   salary?: string;
-  budget?: string;
+  budget: number | any;
+  adjustedBudget?: number;
   skills: string[];
   experienceRequired?: string;
-  openings: number;
-  submissionsCount: number;
+  openings?: number;
+  submissionsCount?: number;
   status: 'open' | 'closed' | 'filled' | 'pending';
-  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvalStatus?: string;
+  broadcastToVendors?: boolean;
   clientId?: string;
   clientName?: string;
   userId?: string;
@@ -75,18 +97,19 @@ export interface Job {
 
 export interface Candidate {
   id: string;
+  vendorCompanyId?: string;
   name: string;
   email?: string;
   phone?: string;
   skills: string[];
-  experience: number;
+  experience: number | string;
   yearsExperience?: number;
   currentCompany?: string;
   currentTitle?: string;
   expectedSalary?: string;
   location?: string;
-  status: 'active' | 'inactive' | 'placed' | 'interviewing';
-  stage: 'sourced' | 'screening' | 'interview' | 'offer' | 'onboarding' | 'hired' | 'rejected';
+  status?: string;
+  stage: string;
   vendorId?: string;
   vendorName?: string;
   vendorCode?: string;
@@ -95,7 +118,10 @@ export interface Candidate {
   jobTitle?: string;
   resumeUrl?: string;
   notes?: string;
+  source: string;
+  aiMatchScore?: number;
   userId?: string;
+  companyId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -148,6 +174,7 @@ export interface Deal {
   joinedDate?: string;
   userId?: string;
   createdAt: string;
+  revenue_amount?: number; // compat
 }
 
 export interface Submission {
@@ -163,13 +190,40 @@ export interface Submission {
   createdAt: string;
 }
 
+export interface Collaboration {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  vendorId: string;
+  clientId: string;
+  status: 'proposed' | 'collaborated' | 'interviewing' | 'rejected' | 'placed';
+  matchScore: number;
+  clientFeedback?: string;
+  vendorNotes?: string;
+  lastActivityAt: string;
+  createdAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  collaborationId: string;
+  createdAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  isAiAssisted: boolean;
+  createdAt: string;
+}
+
 export interface AgentLog {
   id: string;
-  type: 'email' | 'resume' | 'ai_match' | 'followup' | 'system' | 'shortlist' | 'notify' | 'revenue';
+  type: string;
   level: 'info' | 'warn' | 'error' | 'success';
   message: string;
-  status: 'running' | 'success' | 'error' | 'paused' | 'idle';
   metadata?: any;
-  companyId?: string;
   createdAt: string;
 }

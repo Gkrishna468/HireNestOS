@@ -29,6 +29,7 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState('supabase');
   const [loading, setLoading] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
+  const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
 
   const [supabaseConfig, setSupabaseConfig] = useState({
     url: localStorage.getItem('hirenest_supabase_url') || '',
@@ -273,19 +274,88 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-slate-50">
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                    <div>
+                      <h5 className="text-[11px] font-black text-amber-900 uppercase">Action Required in Google Cloud Console</h5>
+                      <p className="text-[10px] text-amber-700 font-medium leading-relaxed mt-1">
+                        If you see an "Old App" or "Authorization Error", update your Authorized Redirect URIs in the Google Developer Console to match the URI below. This ensures the token returns to this specific HireNest instance.
+                      </p>
+                    </div>
+                  </div>
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">OAuth Configuration</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase ml-1">Redirect URI</p>
-                      <code className="block p-3 bg-slate-50 rounded-lg text-xs break-all border border-slate-200">{gmailConfig.redirectUri}</code>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase ml-1">Redirect URI (Copy to Google Console)</p>
+                      <code className="block p-3 bg-slate-900 text-slate-300 rounded-lg text-[10px] break-all border border-slate-800 font-mono select-all">
+                        {gmailConfig.redirectUri}
+                      </code>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase ml-1">Webhook URL</p>
-                      <code className="block p-3 bg-slate-50 rounded-lg text-xs break-all border border-slate-200">{gmailConfig.webhookUrl}</code>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase ml-1">Universal Webhook Handle</p>
+                      <code className="block p-3 bg-slate-50 rounded-lg text-[10px] break-all border border-slate-200 font-mono">{gmailConfig.webhookUrl}</code>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg text-slate-900">Security Protocols</h2>
+                  <p className="text-slate-500 text-xs mt-0.5">Manage access controls and administrative credentials.</p>
+                </div>
+              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (passwords.new !== passwords.confirm) {
+                  return toast.error("New passwords don't match");
+                }
+                setLoading(true);
+                const { error } = await supabase.auth.updateUser({ password: passwords.new });
+                if (error) toast.error(error.message);
+                else {
+                  toast.success("Password updated successfully");
+                  setPasswords({ current: '', new: '', confirm: '' });
+                }
+                setLoading(false);
+              }} className="max-w-md space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwords.new}
+                    onChange={e => setPasswords({...passwords, new: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwords.confirm}
+                    onChange={e => setPasswords({...passwords, confirm: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg flex items-center justify-center gap-2"
+                >
+                  {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                  Update Administrative Password
+                </button>
+              </form>
             </div>
           )}
 

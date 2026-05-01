@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { User, Role } from '@/types';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -22,13 +23,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setLoading(false);
-      return;
-    }
-
     const checkSession = async () => {
       try {
+        // Check for Executive Session first
+        const execSession = localStorage.getItem('hirenest_exec_session');
+        if (execSession) {
+          setUser(JSON.parse(execSession));
+          setLoading(false);
+          return;
+        }
+
+        if (!isSupabaseConfigured()) {
+          setLoading(false);
+          return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           await resolveUser(session.user);
@@ -73,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: authUser.email!,
           name: profile.name || authUser.user_metadata?.name || authUser.email!.split('@')[0],
           role: profile.role || 'viewer',
-          company: profile.company,
+          companyId: profile.company_id,
           status: profile.status || 'active',
         });
       } else {
@@ -82,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: authUser.id,
           email: authUser.email!,
           name: authUser.user_metadata?.name || authUser.email!.split('@')[0],
-          role: authUser.user_metadata?.role || 'viewer',
+          role: (authUser.user_metadata?.role as Role) || 'viewer',
           status: 'active',
         });
       }
@@ -99,10 +108,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    // Demo fallback
-    if (email === 'admin@hirenest.com' && password === 'admin123') {
-      setUser({ id: 'demo-admin', email, name: 'Admin User', role: 'admin', status: 'active' });
+    // Executive Bypass for GOPAL and Demo Admin
+    if (
+      (email === 'gopal@hirenestworkforce.com' && password === 'founding2026') ||
+      (email === 'admin@hirenest.com' && password === 'admin123')
+    ) {
+      const execUser: User = { 
+        id: 'executive-root', 
+        email, 
+        name: email === 'admin@hirenest.com' ? 'Admin User' : 'Gopala Krishna', 
+        role: 'admin', 
+        status: 'active' 
+      };
+      setUser(execUser);
+      localStorage.setItem('hirenest_exec_session', JSON.stringify(execUser));
+      toast.success('Executive access granted');
       return;
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured. Please check your settings.');
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -119,6 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    localStorage.removeItem('hirenest_exec_session');
     await supabase.auth.signOut();
     setUser(null);
   };

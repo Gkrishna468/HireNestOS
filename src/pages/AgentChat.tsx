@@ -57,9 +57,8 @@ export default function AgentChat() {
     setLoading(true);
 
     try {
-      const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+      const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      
       const context = `
 Current System Data Context:
 - Jobs Open: ${jobs.length}
@@ -74,9 +73,12 @@ You can suggest strategies for pulling recruiter leads from sources like LinkedI
 Please answer the user's request based on your role and the system data context provided.
 `;
 
-      const result = await model.generateContent([context, ...messages.map(m => `${m.role}: ${m.content}`), `user: ${input}`]);
-      const response = await result.response;
-      const text = response.text();
+      const result = await genAI.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: [context, ...messages.map(m => `${m.role}: ${m.content}`), `user: ${input}`]
+      });
+      
+      const text = result.text || "";
 
       setMessages(prev => [...prev, { role: 'assistant', content: text, agent: selectedAgent.id, timestamp: new Date().toISOString() }]);
     } catch (err: any) {

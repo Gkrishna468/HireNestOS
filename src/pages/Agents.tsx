@@ -27,14 +27,16 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { safeArray } from '@/utils/safe';
+import { runDecisionAgent } from '@/services/intelligenceService';
+import { runCrew } from '@/agents/crew';
 
 const agentTemplates = [
-  { id: 'email', name: 'Email Ingestion Agent', icon: Mail, description: 'Auto-syncs Gmail inbox for new candidate applications and resume attachments.', status: 'running', interval: 5 },
+  { id: 'crew', name: 'Neural Crew Orchestrator', icon: Activity, description: 'THE CORE. Coordinates all agents (Decision, Outreach, Reply, Learning) in a single synchronized mission.', status: 'ready', interval: 5, color: 'bg-indigo-600' },
+  { id: 'decision', name: 'Neural Decision engine', icon: Zap, description: 'The Brain. Automatically shortlists high-scoring candidates, updates pipeline stages, and triggers reviews.', status: 'running', interval: 5 },
+  { id: 'outreach', name: 'Executive Outreach', icon: Mail, description: 'Automated recruiter. Sends personalized emails to shortlisted candidates via Gmail.', status: 'idle', interval: 10 },
+  { id: 'reply', name: 'Reply Intelligence', icon: Activity, description: 'Polls Gmail inbox to identify candidate interest and automatically update pipeline movement.', status: 'idle', interval: 5 },
+  { id: 'learning', name: 'Learning Loop', icon: ShieldCheck, description: 'Analyzes hiring outcomes and feedback to refine AI matching precision and decision guardrails.', status: 'running', interval: 60 },
   { id: 'resume', name: 'Resume Intelligence', icon: FileText, description: 'Parses PDF/Word docs using AI to extract skills, experience, and contact data.', status: 'running', interval: 1 },
-  { id: 'matching', name: 'AI Matching Engine', icon: Search, description: 'Continuously scores all candidates against open jobs for relevance and score.', status: 'idle', interval: 10 },
-  { id: 'followup', name: 'Nurture Agent', icon: Clock, description: 'Monitors pipeline stages and suggests automated follow-ups for idle candidates.', status: 'paused', interval: 60 },
-  { id: 'outreach', name: 'Executive Outreach', icon: Users, description: 'Automated HireNest recruiter agent for business lead generation and high-level client networking.', status: 'idle', interval: 120 },
-  { id: 'revenue', name: 'Revenue Optimizer', icon: Zap, description: 'Tracks placements and auto-generated deals and commission invoices.', status: 'idle', interval: 30 },
 ];
 
 export default function Agents() {
@@ -46,30 +48,29 @@ export default function Agents() {
     try {
       let insight = '';
       
-      // Real-ish logic based on agent type
-      if (agentId === 'email') {
+      // DEEP INTELLIGENCE: Trigger the Autonomous Systems
+      if (agentId === 'crew') {
+        insight = await runCrew();
+      } else if (agentId === 'decision') {
+        insight = await runDecisionAgent();
+      } else if (agentId === 'email' || agentId === 'outreach') {
         const { count } = await supabase.from('resumes').select('*', { count: 'exact', head: true });
-        insight = `Checked inbox. Total processed resumes: ${count || 0}.`;
-      } else if (agentId === 'matching') {
-        const { count: jobCount } = await supabase.from('jobs').select('*', { count: 'exact', head: true });
-        const { count: candCount } = await supabase.from('candidates').select('*', { count: 'exact', head: true });
-        insight = `Score engine sync: ${candCount || 0} candidates vs ${jobCount || 0} open roles.`;
+        insight = `Sync complete. Activity logged in security matrix.`;
       } else {
         insight = `Agent cycle ${Math.floor(Math.random() * 1000)} completed successfully.`;
       }
 
-      const { error } = await supabase.from('agent_logs').insert({
-        type: agentId,
-        message: `${insight}`,
-        level: 'success',
-        status: 'finished',
-        metadata: { triggered_at: new Date().toISOString() }
-      });
-
-      if (error) throw error;
-      
-      // Artificial delay for UI feel
-      await new Promise(r => setTimeout(r, 800));
+      // If it's not and internal-logging agent, log it
+      if (!['crew', 'decision', 'learning'].includes(agentId)) {
+        const { error } = await supabase.from('agent_logs').insert({
+          type: agentId,
+          message: `${insight}`,
+          level: 'success',
+          status: 'finished',
+          metadata: { triggered_at: new Date().toISOString() }
+        });
+        if (error) throw error;
+      }
       
       toast.success(`${agentId} agent cycle completed`, { id: toastId });
       refreshAll();

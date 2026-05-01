@@ -22,14 +22,24 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function DealRoom() {
-  const { clients, jobs, candidates } = useData();
+  const { clients, jobs, candidates, deals } = useData();
 
-  // Mock revenue stats (calculated in real app from deals table)
+  // Calculate real revenue stats from deals table
+  const totalPipeline = deals.reduce((sum, d) => sum + (Number(d.revenue_amount) || 0), 0);
+  const realizedRevenue = deals.filter(d => d.payment_received).reduce((sum, d) => sum + (Number(d.revenue_amount) || 0), 0);
+  const pendingPayouts = deals.filter(d => !d.payment_received).reduce((sum, d) => sum + (Number(d.payout_amount) || 0), 0);
+
+  const formatCurrency = (val: number) => {
+    if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)}Cr`;
+    if (val >= 100000) return `₹${(val / 100000).toFixed(2)}L`;
+    return `₹${val.toLocaleString()}`;
+  };
+
   const revenueStats = [
-    { label: 'Pipeline Value', value: '₹1.2Cr', trend: '+12.5%', icon: Target, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-    { label: 'Projected Monthly', value: '₹8.4L', trend: '+4.2%', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-    { label: 'Pending Payouts', value: '₹2.1L', trend: '-2.1%', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
-    { label: 'Realized Revenue', value: '₹34.2L', trend: '+18.1%', icon: CheckCircle2, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: 'Pipeline Value', value: formatCurrency(totalPipeline), trend: '+12.5%', icon: Target, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+    { label: 'Projected Monthly', value: formatCurrency(totalPipeline * 0.4), trend: '+4.2%', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+    { label: 'Pending Payouts', value: formatCurrency(pendingPayouts), trend: '-2.1%', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
+    { label: 'Realized Revenue', value: formatCurrency(realizedRevenue), trend: '+18.1%', icon: CheckCircle2, color: 'text-blue-600', bg: 'bg-blue-100' },
   ];
 
   return (
@@ -83,44 +93,46 @@ export default function DealRoom() {
             </div>
             
             <div className="divide-y divide-slate-100">
-              {[
-                { client: 'Infosys', role: 'Full Stack Engineer', candidate: 'Raj Kumar', status: 'interview', value: '₹96k' },
-                { client: 'Flipkart', role: 'Data Scientist', candidate: 'Sara Khan', status: 'offer', value: '₹1.4L' },
-                { client: 'Zomato', role: 'Lead DevOps', candidate: 'Vijay Singh', status: 'placed', value: '₹2.1L' },
-              ].map((deal, i) => (
-                <div key={i} className="p-4 hover:bg-slate-50 transition-colors flex items-center gap-6 group">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors shrink-0">
-                    <Building2 className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{deal.client}</h4>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-sm font-medium text-slate-500 truncate">{deal.role}</span>
+              {deals.length > 0 ? (
+                deals.map((deal, i) => (
+                  <div key={deal.id} className="p-4 hover:bg-slate-50 transition-colors flex items-center gap-6 group">
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors shrink-0">
+                      <Building2 className="w-6 h-6" />
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs">
-                      <span className="flex items-center gap-1 text-slate-400">
-                        <Users className="w-3 h-3" />
-                        {deal.candidate}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{deal.client_name}</h4>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-sm font-medium text-slate-500 truncate">{deal.job_title}</span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs">
+                        <span className="flex items-center gap-1 text-slate-400">
+                          <Users className="w-3 h-3" />
+                          {deal.candidate_name}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-slate-900">{formatCurrency(deal.revenue_amount)}</p>
+                      <span className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter",
+                        deal.status === 'placed' ? "bg-green-100 text-green-700" :
+                        deal.status === 'offered' ? "bg-blue-100 text-blue-700" :
+                        "bg-orange-100 text-orange-700"
+                      )}>
+                        {deal.status}
                       </span>
                     </div>
+                    <button className="p-2 text-slate-300 hover:text-indigo-600 transition-colors">
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-slate-900">{deal.value}</p>
-                    <span className={cn(
-                      "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter",
-                      deal.status === 'placed' ? "bg-green-100 text-green-700" :
-                      deal.status === 'offer' ? "bg-blue-100 text-blue-700" :
-                      "bg-orange-100 text-orange-700"
-                    )}>
-                      {deal.status}
-                    </span>
-                  </div>
-                  <button className="p-2 text-slate-300 hover:text-indigo-600 transition-colors">
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+                ))
+              ) : (
+                <div className="p-20 text-center text-slate-400">
+                  <p>No active deals in the pipeline yet.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

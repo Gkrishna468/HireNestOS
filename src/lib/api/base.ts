@@ -7,9 +7,9 @@ import { supabase } from '../supabase';
 import { safeArray, safeString, safeNumber, safeSkills } from '@/utils/safe';
 import type { Client, Vendor, Job, Candidate, User, Resume, FollowUp, Deal, Submission } from '@/types';
 
-export async function safeQuery<T>(promise: Promise<any>, fallback: T): Promise<T> {
+export async function safeQuery<T>(promise: PromiseLike<any>, fallback: T): Promise<T> {
   try {
-    const { data, error } = await promise;
+    const { data, error } = await (promise as Promise<any>);
     if (error) {
       console.error('Supabase Query Error:', error.message);
       return fallback;
@@ -24,9 +24,18 @@ export async function safeQuery<T>(promise: Promise<any>, fallback: T): Promise<
 export async function safeInsert(table: string, payload: any) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    
+    // Fetch profile to get company_id
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user?.id)
+      .single();
+
     const cleanPayload = {
       ...payload,
       user_id: user?.id,
+      company_id: profile?.company_id,
     };
     return safeQuery(
       supabase.from(table).insert(cleanPayload).select(),
@@ -67,6 +76,7 @@ export const sanitizeClient = (c: any): Client => ({
   clientCode: safeString(c.client_code || c.clientCode),
   notes: safeString(c.notes),
   userId: safeString(c.user_id || c.userId),
+  companyId: safeString(c.company_id || c.companyId),
   createdAt: safeString(c.created_at || c.createdAt),
   updatedAt: safeString(c.updated_at || c.updatedAt),
 });
@@ -84,6 +94,7 @@ export const sanitizeVendor = (v: any): Vendor => ({
   recruiterCompany: safeString(v.recruiter_company),
   vendorCode: safeString(v.vendor_code),
   userId: safeString(v.user_id),
+  companyId: safeString(v.company_id),
   createdAt: safeString(v.created_at),
   updatedAt: safeString(v.updated_at),
 });
@@ -95,7 +106,7 @@ export const sanitizeJob = (j: any): Job => ({
   location: safeString(j.location),
   type: safeString(j.type),
   salary: safeString(j.salary),
-  budget: safeString(j.budget),
+  budget: j.budget || 0,
   skills: safeSkills(j.skills),
   experienceRequired: safeString(j.experience_required),
   openings: safeNumber(j.openings),
@@ -105,6 +116,7 @@ export const sanitizeJob = (j: any): Job => ({
   clientId: safeString(j.client_id),
   clientName: safeString(j.client_name),
   userId: safeString(j.user_id),
+  companyId: safeString(j.company_id),
   closedDate: safeString(j.closed_date),
   createdAt: safeString(j.created_at),
   updatedAt: safeString(j.updated_at),
@@ -132,7 +144,9 @@ export const sanitizeCandidate = (c: any): Candidate => ({
   jobTitle: safeString(c.job_title),
   resumeUrl: safeString(c.resume_url),
   notes: safeString(c.notes),
+  source: safeString(c.source || 'portal'),
   userId: safeString(c.user_id),
+  companyId: safeString(c.company_id),
   createdAt: safeString(c.created_at),
   updatedAt: safeString(c.updated_at),
 });

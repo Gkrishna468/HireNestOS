@@ -101,7 +101,7 @@ export default function Candidates() {
                   <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expertise & Skills</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Experience</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status/Stage</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Source</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Organization / Source</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
@@ -149,12 +149,16 @@ export default function Candidates() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        {candidate.source === 'resume' ? (
-                          <span className="px-2 py-0.5 bg-purple-50 text-purple-600 border border-purple-100 rounded font-bold uppercase tracking-widest text-[9px]">AI Resume</span>
-                        ) : (
-                          <span className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded font-bold uppercase tracking-widest text-[9px]">Portal</span>
-                        )}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          {candidate.source === 'resume' ? (
+                            <span className="px-2 py-0.5 bg-purple-50 text-purple-600 border border-purple-100 rounded font-bold uppercase tracking-widest text-[9px]">AI Resume</span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded font-bold uppercase tracking-widest text-[9px]">Portal</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-mono font-bold text-emerald-600 opacity-60">ID: {candidate.companyId || 'ROOT'}</span>
+                        <span className="text-[9px] text-slate-400 truncate max-w-[100px]">{candidate.vendorName || candidate.vendorCode || 'Direct'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">

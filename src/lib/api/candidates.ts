@@ -34,6 +34,7 @@ export async function getAllCandidates(): Promise<Candidate[]> {
     stage: 'sourced',
     resumeUrl: r.url || '',
     notes: `From resume: ${r.file_name}`,
+    source: 'resume',
     createdAt: r.created_at || new Date().toISOString(),
     updatedAt: r.created_at || new Date().toISOString(),
   }));
@@ -47,19 +48,14 @@ export async function createCandidate(data: Partial<Candidate>) {
     email: data.email || null,
     phone: data.phone || null,
     skills: data.skills || [],
-    experience: data.experience ?? 0,
-    years_experience: data.yearsExperience ?? data.experience ?? 0,
-    location: data.location || null,
-    status: data.status || 'active',
+    experience: data.experience?.toString() ?? '0',
+    current_title: data.currentTitle || null,
     stage: data.stage || 'sourced',
-    source_vendor_id: data.vendorId || null,
-    vendor_name: data.vendorName || null,
-    client_id: data.clientId || null,
-    job_id: data.jobId || null,
-    job_title: data.jobTitle || null,
+    vendor_company_id: data.vendorCompanyId || null,
     resume_url: data.resumeUrl || null,
-    notes: data.notes || null,
-  });
+    source: data.source || 'vendor',
+    ai_match_score: data.aiMatchScore || 0,
+  } as any);
 }
 
 export async function updateCandidate(id: string, updates: Partial<Candidate>) {
